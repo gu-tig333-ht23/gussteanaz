@@ -18,6 +18,7 @@ class HomePage extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             onPressed: () {
+              //Öppnar en dialogruta med de olika filteralternativen, valt filteralternativ uppdaterar selectedFilterOption samt bockar i vald ruta.
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -94,8 +95,7 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: Container(
-        child: Column(
+      body: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
@@ -103,14 +103,15 @@ class HomePage extends StatelessWidget {
                 builder: (context, todoProvider, child) {
                   final filteredList =
                       todoProvider.filterTasks(todoProvider.selectedFilterOption);
-
+                    //filteredList bestämmer vilka föremål i listan som skall visas på HomePage baserat på selectedFilterOption.
                   return ListView(
+                    //Bygger en ListView bestående av ListTiles från klassen ToDoItem baserat på föremålen i filteredList.
                     children: [
                       for (ToDo item in filteredList)
                         ToDoItem(
                           todo: item,
-                          setDone: todoProvider.toggleTask,
-                          deleteItem: todoProvider.removeTask,
+                          toggleTask: todoProvider.toggleTask,
+                          removeTask: todoProvider.removeTask,
                         ),
                     ],
                   );
@@ -119,11 +120,13 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        shape: RoundedRectangleBorder(side: BorderSide(width: 3,color: Theme.of(context).colorScheme.background),borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.add),
         onPressed: () {
+          //Knappen navigerar till vyn "AddItem".
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddItem()),
@@ -134,16 +137,17 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class ToDoItem extends StatelessWidget {
-  final Function(ToDo) deleteItem;
-  final Function(ToDo) setDone;
+class ToDoItem extends StatelessWidget {  
+  //Klassen ToDoItem definierar hur ListTiles som visas på HomePage ska se ut.
+  final Function(ToDo) removeTask;
+  final Function(ToDo) toggleTask;
   final ToDo todo;
 
   const ToDoItem({
     Key? key,
     required this.todo,
-    required this.setDone,
-    required this.deleteItem,
+    required this.toggleTask,
+    required this.removeTask,
   }) : super(key: key);
 
   @override
@@ -155,35 +159,35 @@ class ToDoItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         tileColor: Theme.of(context).colorScheme.primary,
-        leading: Container(
-          child: IconButton(
+        leading: IconButton(
             padding: EdgeInsets.zero,
             color: Colors.black,
             iconSize: 21,
             icon: Icon(
+                //Om föremålet har done:true så är ikonen en ibockad ruta, annars är det en tom ruta.
                 todo.isDone ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded),
             onPressed: () {
-              setDone(todo);
+              toggleTask(todo);
             },
           ),
-        ),
+        
         title: Text(
-          todo.todoText!,
+          todo.title,
           style: TextStyle(
+            ////Om föremålet har done:true så är texten genomstruken, annars inte.
             decoration: todo.isDone ? TextDecoration.lineThrough : null,
           ),
         ),
-        trailing: Container(
-          child: IconButton(
+        trailing: IconButton(
             padding: EdgeInsets.zero,
             color: Colors.black,
             iconSize: 21,
             icon: Icon(Icons.block),
             onPressed: () {
-              deleteItem(todo);
+              removeTask(todo);
             },
           ),
-        ),
+        
       ),
     );
   }

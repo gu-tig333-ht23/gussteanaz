@@ -13,19 +13,19 @@ class _AddItemState extends State<AddItem> {
   final inputController = TextEditingController();
 
   void addToDo(BuildContext context, String todo) {
+    //Funktionen kör addTask från ToDoProvider, rensar textfältet och navigerar tillbaka till HomePage.
     if (todo.isNotEmpty) {
       final todoProvider = Provider.of<ToDoProvider>(context, listen: false);
-
-      todoProvider.addTask(todo);
-
-      inputController.clear();
-
-      Navigator.pop(context);
+      todoProvider.addTask(todo).then((_) {
+        inputController.clear();
+        Navigator.pop(context);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    //Definierar utseende på vyn AddItem.
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -43,7 +43,7 @@ class _AddItemState extends State<AddItem> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                hintText: 'Skriv något nytt att lägga till i att göra-listan',
+                hintText: 'Skriv något nytt att göra...',
               ),
             ),
           ),

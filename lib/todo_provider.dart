@@ -1,32 +1,58 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class ToDoProvider extends ChangeNotifier {
-  final List<ToDo> _homeList = ToDo.todoList();
+  final String apiKey = '8c752429-26ec-400a-8283-6d6b6c250a5c';
+  final String apiUrl = 'https://todoapp-api.apps.k8s.gu.se';
+  List<ToDo> _homeList = [];
 
   List<ToDo> get homeList => _homeList;
 
-  void addTask(String task) {
-    String newId = UniqueKey().toString();
-    _homeList.add(
-      ToDo(
-        id: newId,
-        todoText: task,
-        isDone: false,
-      ),
+  ToDoProvider() {
+    fetchTasks();
+  }
+
+  Future<void> fetchTasks() async {
+    final response = await http.get(Uri.parse('$apiUrl/todos?key=$apiKey'));
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      _homeList = data.map((task) => ToDo.fromJson(task)).toList();
+      notifyListeners();
+    }
+  }
+
+  Future<void> addTask(String task) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/todos?key=$apiKey'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'title': task, 'done': false}),
     );
-    notifyListeners();
+
+    if (response.statusCode == 200) {
+      await fetchTasks(); //Hämtar den uppdaterade listan från API:t.
+    }
   }
 
-  void toggleTask(ToDo todo) {
+  Future<void> toggleTask(ToDo todo) async {
     todo.isDone = !todo.isDone;
-    notifyListeners();
+    final response = await http.put(
+      Uri.parse('$apiUrl/todos/${todo.id}?key=$apiKey'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(todo.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      await fetchTasks(); //Hämtar den uppdaterade listan från API:t.
+    }
   }
 
-  void removeTask(ToDo todo) {
-    _homeList.removeWhere((item) => item.id == todo.id);
-    notifyListeners();
+  Future<void> removeTask(ToDo todo) async {
+    final response = await http.delete(Uri.parse('$apiUrl/todos/${todo.id}?key=$apiKey'));
+    if (response.statusCode == 200) {
+      await fetchTasks(); //Hämtar den uppdaterade listan från API:t.
+    }
   }
-
   List<ToDo> filterTasks(FilterOption option) {
     switch (option) {
       case FilterOption.alla:
@@ -51,18 +77,29 @@ class ToDoProvider extends ChangeNotifier {
 }
 
 class ToDo {
-  String? id;
-  String? todoText;
+  final String id;
+  final String title;
   bool isDone;
 
   ToDo({
     required this.id,
-    required this.todoText,
+    required this.title,
     this.isDone = false,
   });
 
-  static List<ToDo> todoList() {
-    return [];
+  factory ToDo.fromJson(Map<String, dynamic> json) {
+    return ToDo(
+      id: json['id'],
+      title: json['title'],
+      isDone: json['done'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'done': isDone,
+    };
   }
 }
 
